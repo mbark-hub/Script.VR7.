@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOKA Hub - Premium Gaming Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, #000 80%), url('https://www.transparenttextures.com/patterns/black-thread.png');
+            z-index: 2;
+            opacity: 0.6;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 450px;
+            background: rgba(15, 15, 15, 0.85);
+            border: 2px solid #ff003c;
+            border-image: linear-gradient(to bottom, #ff003c, #d4af37) 1;
+            box-shadow: 0 0 30px rgba(255, 0, 60, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 4px;
+            transition: all 0.5s ease;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 24px;
+            color: #d4af37;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(30, 30, 30, 0.7);
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: 0.3s;
+            text-align: center;
+        }
+
+        .input-group input:focus {
+            border-color: #ff003c;
+            box-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+            outline: none;
+        }
+
+        .file-upload {
+            position: relative;
+            display: block;
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px dashed #d4af37;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+        }
+
+        .file-upload:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .device-btn {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #444;
+            color: #fff;
+            padding: 20px 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-btn:hover {
+            border-color: #ff003c;
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .device-btn.selected {
+            border-color: #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .primary-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #ff003c, #990024);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 0, 60, 0.4);
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 60, 0.6);
+        }
+
+        .user-badge {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(10, 10, 10, 0.85);
+            padding: 8px 15px;
+            border-radius: 50px;
+            border: 1px solid #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transform: translateX(-50px);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .user-badge.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .user-badge img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ff003c;
+        }
+
+        .user-info-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .user-info-text .name {
+            font-weight: bold;
+            font-size: 14px;
+            color: #fff;
+        }
+
+        .user-info-text .dev-type {
+            font-size: 11px;
+            color: #d4af37;
+        }
+
+        .game-card {
+            background: linear-gradient(135deg, #151515 0%, #222 100%);
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.03);
+            transform: rotate(45deg);
+            pointer-events: none;
+        }
+
+        .game-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 15px;
+            background: rgba(255, 0, 60, 0.1);
+            border: 2px solid #ff003c;
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 60, 0.3); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 0, 60, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 60, 0.3); }
+        }
+
+        .game-title {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .game-desc {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .url-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #d4af37, #aa820a);
+            color: #000;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transition: 0.3s;
+        }
+
+        .url-btn:hover {
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div class="stars"></div>
+
+    <div class="user-badge" id="global-badge">
+        <img id="badge-avatar" src="" alt="Avatar">
+        <div class="user-info-text">
+            <span class="name" id="badge-username">User</span>
+            <span class="dev-type" id="badge-platform">Platform</span>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <div id="screen-step1" class="screen active">
+            <h2>إنشاء الهوية الرقمية</h2>
+            <div class="input-group">
+                <label>اسم المستخدم (Username)</label>
+                <input type="text" id="username" placeholder="ادخل اسمك المستعار...">
+            </div>
+            <div class="input-group">
+                <label>تاريخ الميلاد</label>
+                <input type="date" id="birthdate">
+            </div>
+            <button class="primary-btn" onclick="nextStep(2)">التالي</button>
+        </div>
+
+        <div id="screen-step2" class="screen">
+            <h2>اختر منصة التشغيل</h2>
+            <div class="btn-grid">
+                <button class="device-btn" onclick="selectPlatform('iPhone')">
+                    <span style="font-size: 30px;">🍏</span>
+                    <span>iPhone</span>
+                </button>
+                <button class="device-btn" onclick="selectPlatform('Android')">
+                    <span style="font-size: 30px;">📱</span>
+                    <span>Android</span>
+                </button>
+            </div>
+            <button class="primary-btn" style="margin-top: 25px;" onclick="nextStep(3)">التالي</button>
+        </div>
+
+        <div id="screen-step3" class="screen">
+            <h2>الصورة الرمزية</h2>
+            <div class="input-group">
+                <label class="file-upload">
+                    <span id="upload-status">اضغط هنا لرفع صورتك الشخصية 📸</span>
+                    <input type="file" id="avatar" accept="image/*" onchange="handleAvatar(this)">
+                </label>
+            </div>
+            <button class="primary-btn" onclick="finalizeProfile()">حفظ وإنشاء الحساب</button>
+        </div>
+
+        <div id="screen-hub" class="screen">
+            <div class="game-card">
+                <div class="game-icon">🎮</div>
+                <div class="game-title">مركز تشغيل السكربتات</div>
+                <div class="game-desc">اضغط على الزر أدناه للانتقال السريع إلى الرابط والبيانات الخاصة بك مفعلة بالكامل.</div>
+                <a href="https://raw.githubusercontent.com/515-s/faisal-scripts/refs/heads/main/a" target="_blank" class="url-btn">تشغيل الرابط المباشر</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let lines = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class MatrixLine {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * -canvas.height;
+                this.speed = Math.random() * 3 + 1;
+                this.length = Math.random() * 80 + 40;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.y = Math.random() * -100;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.beginPath();
+                let gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.length);
+                gradient.addColorStop(0, 'transparent');
+                gradient.addColorStop(1, Math.random() > 0.5 ? '#ff003c' : '#d4af37');
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 1.5;
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.length);
+                ctx.stroke();
+            }
+        }
+
+        for (let i = 0; i < 60; i++) {
+            lines.push(new MatrixLine());
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 10, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            lines.forEach(line => {
+                line.update();
+                line.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        let userData = {
+            username: '',
+            birthdate: '',
+            platform: '',
+            avatar: ''
+        };
+
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('boka_user_profile');
+            if (savedData) {
+                userData = JSON.parse(savedData);
+                showBadge();
+                showScreen('screen-hub');
+            }
+        });
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function nextStep(step) {
+            if (step === 2) {
+                const user = document.getElementById('username').value.trim();
+                const date = document.getElementById('birthdate').value;
+                if (!user || !date) {
+                    alert('الرجاء إدخال اسم المستخدم وتاريخ الميلاد أولاً!');
+                    return;
+                }
+                userData.username = user;
+                userData.birthdate = date;
+                showScreen('screen-step2');
+            } else if (step === 3) {
+                if (!userData.platform) {
+                    alert('الرجاء اختيار نوع المنصة (iPhone أو Android)!');
+                    return;
+                }
+                showScreen('screen-step3');
+            }
+        }
+
+        function selectPlatform(platform) {
+            userData.platform = platform;
+            document.querySelectorAll('.device-btn').forEach(btn => btn.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        function handleAvatar(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    userData.avatar = e.target.result;
+                    document.getElementById('upload-status').innerText = '✅ تم تحميل الصورة بنجاح';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function finalizeProfile() {
+            if (!userData.avatar) {
+                userData.avatar = 'https://www.w3schools.com/howto/img_avatar.png'; 
+            }
+            localStorage.setItem('boka_user_profile', JSON.stringify(userData));
+            showBadge();
+            showScreen('screen-hub');
+        }
+
+        function showBadge() {
+            document.getElementById('badge-avatar').src = userData.avatar;
+            document.getElementById('badge-username').innerText = userData.username;
+            document.getElementById('badge-platform').innerText = userData.platform === 'iPhone' ? 'iPhone • 🍏' : 'Android • 📱';
+            document.getElementById('global-badge').classList.add('visible');
+        }
+    </script>
+</body>
+</html>
